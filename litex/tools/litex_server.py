@@ -70,12 +70,13 @@ def _read_merger(addrs, max_length=256, bursts=["incr", "fixed"]):
 # Remote Server ------------------------------------------------------------------------------------
 
 class RemoteServer(EtherboneIPC):
-    def __init__(self, comm, bind_ip, bind_port=1234, addr_width=32):
-        self.comm       = comm
-        self.bind_ip    = bind_ip
-        self.bind_port  = bind_port
-        self.lock       = False
-        self.addr_width = addr_width
+    def __init__(self, comm, bind_ip, bind_port=1234, addr_width=32, server_info=True):
+        self.comm        = comm
+        self.bind_ip     = bind_ip
+        self.bind_port   = bind_port
+        self.lock        = False
+        self.addr_width  = addr_width
+        self.server_info = server_info
 
     def open(self):
         if hasattr(self, "socket"):
@@ -109,7 +110,8 @@ class RemoteServer(EtherboneIPC):
     def _serve_thread(self):
         while True:
             client_socket, addr = self.socket.accept()
-            self._send_server_info(client_socket)
+            if self.server_info:
+                self._send_server_info(client_socket)
             print("Connected with " + addr[0] + ":" + str(addr[1]))
             try:
                 # Serve Etherbone reads/writes.
@@ -184,6 +186,9 @@ def main():
     parser.add_argument("--bind-port",       default=1234,           help="Host bind port.")
     parser.add_argument("--addr-width",      default=32,             help="bus address width.")
     parser.add_argument("--debug",           action="store_true",    help="Enable debug.")
+    parser.add_argument("--server-info",     action="store_true",    help="Send the server info packet on client connect.")
+    parser.add_argument("--no-server-info",  action="store_false",   help="Don't send the server info packet on client connect.", dest="server_info")
+    parser.set_defaults(server_info=True)
 
     # UART arguments
     parser.add_argument("--uart",            action="store_true",    help="Select UART interface.")
@@ -281,7 +286,7 @@ def main():
         parser.print_help()
         exit()
 
-    server = RemoteServer(comm, args.bind_ip, int(args.bind_port), addr_width=int(args.addr_width))
+    server = RemoteServer(comm, args.bind_ip, int(args.bind_port), addr_width=int(args.addr_width), server_info=args.server_info)
     server.open()
     server.start(4)
     try:

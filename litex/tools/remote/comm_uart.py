@@ -7,6 +7,7 @@
 import serial
 import struct
 
+from litex.gen import colorer
 from litex.tools.remote.csr_builder import CSRBuilder
 
 # Constants ----------------------------------------------------------------------------------------
@@ -55,6 +56,28 @@ class CommUART(CSRBuilder):
         if self.port.inWaiting() > 0:
             self.port.read(self.port.inWaiting())
 
+    def _print_transaction(self, type, value, addr):
+        type = {
+            "read" : colorer("read ", "cyan"), # Padding for column alignment
+            "write": colorer("write", "green"),
+        }[type]
+
+        mem = ""
+        reg = ""
+        if hasattr(self, "mems"):
+            for k, v in self.mems.d.items():
+                if v.base <= addr <= (v.base + v.size):
+                    mem = " " + k # Padding for column alignment
+                    break
+
+            if hasattr(self, "regs"):
+                for k, v in self.regs.d.items():
+                    if v.addr <= addr < (v.addr + v.length):
+                        reg = " " + k # Padding for column alignment
+                        break
+
+        print("{} 0x{:08x} @ 0x{:08x}{}{}".format(type, value, addr, mem, reg))
+
     def read(self, addr, length=None, burst="incr"):
         self._flush()
         data       = []
@@ -68,7 +91,7 @@ class CommUART(CSRBuilder):
         for i in range(length_int):
             value = int.from_bytes(self._read(4), "big")
             if self.debug:
-                print("read 0x{:08x} @ 0x{:08x}".format(value, addr + 4*i))
+                self._print_transaction("read", value, addr + 4*i)
             if length is None:
                 return value
             data.append(value)
@@ -90,6 +113,6 @@ class CommUART(CSRBuilder):
             for i, value in enumerate(data[offset:offset+size]):
                 self._write(list(value.to_bytes(4, byteorder="big")))
                 if self.debug:
-                    print("write 0x{:08x} @ 0x{:08x}".format(value, addr + offset, 4*i))
+                    self._print_transaction("read", value, addr + offset)
             offset += size
             length -= size

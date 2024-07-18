@@ -186,6 +186,7 @@ def main():
     parser.add_argument("--bind-port",       default=1234,           help="Host bind port.")
     parser.add_argument("--addr-width",      default=32,             help="bus address width.")
     parser.add_argument("--debug",           action="store_true",    help="Enable debug.")
+    parser.add_argument("--csr-csv",         default=None,           help="SoC CSV file.")
     parser.add_argument("--server-info",     action="store_true",    help="Send the server info packet on client connect.")
     parser.add_argument("--no-server-info",  action="store_false",   help="Don't send the server info packet on client connect.", dest="server_info")
     parser.set_defaults(server_info=True)
@@ -217,6 +218,8 @@ def main():
     parser.add_argument("--usb-max-retries", default=10,             help="Number of USB reconecting retries.")
     args = parser.parse_args()
 
+    if args.debug and args.csr_csv is None:
+        print("Argument --debug is set but no SoC CSV file passed in with --csr-csv, reads and writes won't report target memory and register.")
 
     # UART mode
     if args.uart:
@@ -227,7 +230,7 @@ def main():
         uart_port = args.uart_port
         uart_baudrate = int(float(args.uart_baudrate))
         print("[CommUART] port: {} / baudrate: {} / ".format(uart_port, uart_baudrate), end="")
-        comm = CommUART(uart_port, uart_baudrate, debug=args.debug, addr_width=int(args.addr_width))
+        comm = CommUART(uart_port, uart_baudrate, debug=args.debug, addr_width=int(args.addr_width), csr_csv=args.csr_csv)
 
     # JTAG mode
     elif args.jtag:

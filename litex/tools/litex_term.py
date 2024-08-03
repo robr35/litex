@@ -146,9 +146,9 @@ class JTAGUART:
         self.jtag2tcp_thread.start()
         self.pty2tcp_thread  = threading.Thread(target=self.pty2tcp, daemon=True)
         self.tcp2pty_thread  = threading.Thread(target=self.tcp2pty, daemon=True)
-        self.tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         for _ in range(0, 50):
             try:
+                self.tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.tcp.connect(("localhost", self.port))
                 break
             except ConnectionRefusedError:

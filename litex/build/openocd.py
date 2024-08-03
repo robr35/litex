@@ -121,7 +121,7 @@ proc jtagstream_poll {tap tx n} {
     set txi [concat {*}$txi]
 """
         cfg += f"""
-    set rxi [split [drscan $tap {{*}}$txi {endstate}] " "]
+    set rxi [split [drscan $tap {{*}}$txi {endstate}] " \n"]
 """
         cfg += """
     #echo $txi:$rxi

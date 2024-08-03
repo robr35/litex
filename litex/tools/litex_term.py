@@ -483,11 +483,13 @@ class LiteXTerm:
                 time.sleep(self.delay)
 
             # Read response if available.
-            while self.port.in_waiting:
-                ack = self.receive_upload_response()
-                if ack:
-                    outstanding -= 1
-                    break
+            ack = False
+            while not ack:
+                if self.port.in_waiting:
+                    ack = self.receive_upload_response()
+                    if ack:
+                        outstanding -= 1
+                        break
 
         # Get remaining responses.
         for _ in range(outstanding):
@@ -506,6 +508,7 @@ class LiteXTerm:
         frame.cmd = sfl_cmd_jump
         frame.payload = int(self.boot_address, 16).to_bytes(4, "big")
         self.send_frame(frame)
+        time.sleep(5)
 
     def detect_prompt(self, data):
         if len(data):
